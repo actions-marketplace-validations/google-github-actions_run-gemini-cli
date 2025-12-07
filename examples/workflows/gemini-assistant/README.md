@@ -6,6 +6,9 @@ In this guide you will learn how to use the Gemini CLI Assistant via GitHub Acti
   - [Overview](#overview)
   - [Features](#features)
   - [Setup](#setup)
+    - [Prerequisites](#prerequisites)
+    - [Setup Methods](#setup-methods)
+  - [Dependencies](#dependencies)
   - [Usage](#usage)
     - [Supported Triggers](#supported-triggers)
     - [How to Invoke the Gemini CLI Workflow](#how-to-invoke-the-gemini-cli-workflow)
@@ -30,16 +33,39 @@ Unlike specialized Gemini CLI workflows for [pull request reviews](../pr-review)
 
 ## Setup
 
-For detailed setup instructions, including prerequisites and authentication, please refer to the main [Getting Started](../../README.md#quick-start) section and [Authentication documentation](../../docs/authentication.md).
+For detailed setup instructions, including prerequisites and authentication, please refer to the main [Getting Started](../../../README.md#quick-start) section and [Authentication documentation](../../../docs/authentication.md).
+
+### Prerequisites
+
+Add the following entries to your `.gitignore` file to prevent Gemini CLI artifacts from being committed:
+
+```gitignore
+# gemini-cli settings
+.gemini/
+
+# GitHub App credentials
+gha-creds-*.json
+```
+
+### Setup Methods
 
 To use this workflow, you can utilize either of the following methods:
 1. Run the `/setup-github` command in Gemini CLI on your terminal to set up workflows for your repository.
-2. Copy the `gemini-cli.yml` file into your repository's `.github/workflows` directory:
+2. Copy the workflow files into your repository's `.github/workflows` directory:
 
 ```bash
 mkdir -p .github/workflows
-curl -o .github/workflows/gemini-cli.yml https://raw.githubusercontent.com/google-github-actions/run-gemini-cli/main/workflows/gemini-cli/gemini-cli.yml
+curl -o .github/workflows/gemini-dispatch.yml https://raw.githubusercontent.com/google-github-actions/run-gemini-cli/main/examples/workflows/gemini-dispatch/gemini-dispatch.yml
+curl -o .github/workflows/gemini-invoke.yml https://raw.githubusercontent.com/google-github-actions/run-gemini-cli/main/examples/workflows/gemini-assistant/gemini-invoke.yml
 ```
+
+> **Note:** The `gemini-dispatch.yml` workflow is designed to call multiple
+> workflows. If you are only setting up `gemini-invoke.yml`, you should comment out or
+> remove the other jobs in your copy of `gemini-dispatch.yml`.
+
+## Dependencies
+
+This workflow relies on the [gemini-dispatch.yml](../gemini-dispatch/gemini-dispatch.yml) workflow to route requests to the appropriate workflow.
 
 ## Usage
 
@@ -111,11 +137,31 @@ flowchart TD
 
 ## Configuration
 
-The Gemini CLI system prompt, located in the `prompt` input, defines the Gemini AI's role and instructions. You can edit this prompt to, for example:
+The Gemini CLI assistant prompt is defined in the `gemini-invoke.toml` file. The action automatically copies this file from `.github/commands/` to `.gemini/commands/` during execution.
 
-- Change its persona or primary function.
-- Add project-specific guidelines or context.
-- Instruct it to format its output in a specific way.
+**To customize the assistant prompt:**
+
+1. Copy the TOML file to your repository:
+   ```bash
+   mkdir -p .gemini/commands
+   curl -o .gemini/commands/gemini-invoke.toml https://raw.githubusercontent.com/google-github-actions/run-gemini-cli/main/examples/workflows/gemini-assistant/gemini-invoke.toml
+   ```
+
+2. Edit `.gemini/commands/gemini-invoke.toml` to customize:
+   - Change its persona or primary function
+   - Add project-specific guidelines or context
+   - Instruct it to format its output in a specific way
+   - Modify security constraints or workflow steps
+
+3. Commit the file to your repository:
+   ```bash
+   git add .gemini/commands/gemini-invoke.toml
+   git commit -m "feat: customize Gemini assistant prompt"
+   ```
+
+The workflow will use your custom TOML file instead of the default one from the action.
+
+For more details on workflow configuration, see the [Configuration Guide](../CONFIGURATION.md#custom-commands-toml-files).
 
 ## Examples
 
